@@ -1,0 +1,22 @@
+services:
+  bookmarks:
+    image: akshad135/bookmarks:latest
+    container_name: bookmark-manager
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    volumes:
+      - bookmarks_bookmarks-data:/data
+
+    networks:
+      - homelab
+
+volumes:
+  bookmarks_bookmarks-data:
+    external: true
+
+networks:
+  homelab:
+    external: true

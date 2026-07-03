@@ -1,0 +1,51 @@
+(common_tls) {
+    tls /mnt/certs/akshad.crt /mnt/certs/akshad.key
+}
+
+# Default: Glance dashboard
+https://akshad.duckdns.org {
+    import common_tls
+    reverse_proxy glance:8080
+}
+
+# 8001: AdGuard Home UI
+https://akshad.duckdns.org:8001 {
+    import common_tls
+    reverse_proxy adguardhome:80
+}
+
+# 8002: Vaultwarden
+https://akshad.duckdns.org:8002 {
+    import common_tls
+    reverse_proxy vaultwarden:80
+}
+
+# 8003: Bookmark Manager
+https://akshad.duckdns.org:8003 {
+    import common_tls
+    reverse_proxy bookmark-manager:3000
+}
+
+# 8004: Ignis (Obsidian LiveSync)
+https://akshad.duckdns.org:8004 {
+    import common_tls
+    reverse_proxy ignis:8080
+}
+
+# 9001: Helium (browser extension backend)
+https://akshad.duckdns.org:9001 {
+    import common_tls
+
+    log {
+        output stdout
+        format console
+        level DEBUG
+    }
+
+    reverse_proxy helium-nginx:80 {
+        header_up Host {host}
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-Port 9001
+    }
+}

@@ -1,0 +1,26 @@
+services:
+  ignis:
+    image: nobbe/ignis:latest
+    container_name: ignis
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    volumes:
+      - /home/ubuntu/rclone-server/data:/vaults/MyVault
+      - ./data:/app/data
+      - obsidian-app:/app/obsidian-app
+      - ./favicon.png:/app/images/favicon.png:ro
+
+    networks:
+      - homelab
+
+volumes:
+  obsidian-app:
+    external: true
+    name: ignis-web_obsidian-app
+
+networks:
+  homelab:
+    external: true

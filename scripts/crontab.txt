@@ -1,0 +1,12 @@
+# Crontab entries for the Oracle VM
+# Install with: crontab -e
+#
+# To restore from this file:
+#   crontab scripts/crontab.txt
+
+# Vaultwarden JSON backup — daily at 02:00
+0 2 * * * /home/ubuntu/vw-json-backup.sh > /dev/null 2>&1
+
+# acme.sh certificate renewal check — daily at 00:34
+# Only actually renews when cert is within 30 days of expiry (~60 days in)
+34 0 * * * "/home/ubuntu/.acme.sh"/acme.sh --cron --home "/home/ubuntu/.acme.sh" > /dev/null

@@ -1,0 +1,20 @@
+services:
+  glance:
+    image: glanceapp/glance
+    container_name: glance
+    restart: unless-stopped
+
+    networks:
+      - homelab
+
+    volumes:
+      - ./glance.yml:/app/config/glance.yml
+      - ./assets:/app/assets
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    env_file:
+      - .env
+
+networks:
+  homelab:
+    external: true

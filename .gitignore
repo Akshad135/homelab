@@ -1,0 +1,42 @@
+# Secrets
+.env
+*.key
+*.pem
+*.crt
+
+# Databases
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Service data (large, not for version control)
+**/data/
+**/attachments/
+**/icon_cache/
+**/work/
+**/sends/
+**/tmp/
+
+# Vaultwarden backup exports (sensitive)
+vw-export-*.json
+backups/
+
+# AdGuard working files
+**/opt-adguard-work/
+
+# Glance backup files
+glance_backup.yml
+
+# Bitwarden CLI session
+**/Bitwarden CLI/data.json
+
+# Logs
+*.log
+
+# Docker volumes
+**/caddy-data/
+**/caddy-config/
+
+# OS
+.DS_Store
+Thumbs.db

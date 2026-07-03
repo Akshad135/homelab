@@ -1,0 +1,258 @@
+theme:
+  background-color: 230 15 10
+  primary-color: 210 100 60
+  positive-color: 142 71 45
+  negative-color: 0 84 60
+  contrast-multiplier: 1.2
+  text-saturation-multiplier: 0.8
+
+server:
+  assets-path: /app/assets
+
+branding:
+  hide-footer: true
+
+pages:
+  - name: Home
+    hide-desktop-navigation: true
+    columns:
+      # LEFT COLUMN - Clock, Calendar, Weather & Air Quality
+      - size: small
+        widgets:
+          - type: clock
+            hide-header: true
+            hour-format: 24h
+
+          - type: calendar-legacy
+            hide-header: true
+
+          - type: weather
+            hide-header: true
+            location: Bengaluru,India
+            units: metric
+
+          - type: custom-api
+            title: Air Quality
+            hide-header: true
+            cache: 10m
+            url: https://api.waqi.info/feed/geo:12.9719;77.5772/?token=${WAQI_API_TOKEN}
+            template: |
+              {{ $aqiraw := .JSON.Int "data.aqi" }}
+              {{ $aqi := printf "%03d" $aqiraw }}
+              {{ $updated := .JSON.String "data.time.iso" }}
+
+              <div class="flex justify-between items-end">
+                <div>
+                  <div class="size-h5">
+                    {{ if le $aqi "050" }}<div class="color-positive">Good Air Quality</div>
+                    {{ else if le $aqi "100" }}<div class="color-primary">Moderate Air Quality</div>
+                    {{ else if le $aqi "150" }}<div class="color-primary">Unhealthy for Sensitive</div>
+                    {{ else if le $aqi "200" }}<div class="color-negative">Unhealthy Air Quality</div>
+                    {{ else if le $aqi "300" }}<div class="color-negative">Very Unhealthy</div>
+                    {{ else }}<div class="color-negative">Hazardous Air Quality</div>
+                    {{ end }}
+                  </div>
+                  <div class="color-highlight size-h3" style="margin-top: 5px;">AQI: {{ $aqiraw }}</div>
+                </div>
+                <div class="size-h6 color-subdue" style="margin-bottom: 5px;">Updated: {{ slice $updated 11 16 }}</div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; border-top: 1px solid var(--color-separator); padding-top: 15px; margin-top: 10px;">
+                {{ if .JSON.Exists "data.iaqi.pm25.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.pm25.v" }}</div><div class="size-h6">PM2.5</div></div>{{ end }}
+                {{ if .JSON.Exists "data.iaqi.pm10.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.pm10.v" }}</div><div class="size-h6">PM10</div></div>{{ end }}
+                {{ if .JSON.Exists "data.iaqi.h.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.h.v" }}%</div><div class="size-h6">HUMIDITY</div></div>{{ end }}
+                {{ if .JSON.Exists "data.iaqi.t.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.t.v" }}°C</div><div class="size-h6">TEMP</div></div>{{ end }}
+                {{ if .JSON.Exists "data.iaqi.p.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.p.v" }}</div><div class="size-h6">PRESSURE</div></div>{{ end }}
+                {{ if .JSON.Exists "data.iaqi.o3.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Float "data.iaqi.o3.v" }}</div><div class="size-h6">OZONE</div></div>{{ end }}
+              </div>
+
+      # CENTER COLUMN - Stats, Quick Links/Services, and Tailscale/Adguard
+      - size: full
+        widgets:
+          - type: server-stats
+            title: System Resources
+            hide-header: true
+            cache: 30s
+            servers:
+              - type: local
+                name: Stats
+                hide-swap: false
+                hide-mountpoints-by-default: true
+                mountpoints:
+                  "/":
+                    name: Root (45GB)
+                    hide: false
+                  "/boot":
+                    hide: true
+                  "/boot/efi":
+                    hide: true
+                  "/sys/firmware/efi/efivars":
+                    hide: true
+
+          # First row of center panels - Quick Links & Services
+          - type: monitor
+            cache: 1m
+            title: Services
+            sites:
+              - title: Vaultwarden
+                url: https://akshad.duckdns.org:8002
+                icon: si:vaultwarden
+                same-tab: false
+                check-url: http://vaultwarden
+              - title: AdGuard Home
+                url: https://akshad.duckdns.org:8001
+                check-url: http://adguardhome
+                icon: di:adguard-home
+                same-tab: false
+              - title: Rclone
+                url: sftp://akshad.duckdns.org:9000
+                check-url: http://rclone-server:5572/metrics
+                icon: si:rclone
+                same-tab: false
+              - title: Obsidian
+                url: https://akshad.duckdns.org:8004
+                check-url: http://ignis:8080/
+                icon: si:obsidian
+                same-tab: false
+              - title: Helium
+                url: https://akshad.duckdns.org:9001
+                check-url: http://helium-nginx/robots.txt
+                icon: mdi:atom
+                same-tab: false
+              - title: Bookmarks
+                url: https://akshad.duckdns.org:8003
+                check-url: http://bookmark-manager:3000/api/health
+                icon: mdi:bookmark
+              - title: Pastebin
+                url: https://pastebin-personal.akshad-agrawal1978.workers.dev/
+                icon: mdi:clipboard-text
+
+          # Second row of center panels - Tailscale & DNS
+          - type: split-column
+            widgets:
+              - type: custom-api
+                title: Tailscale Devices
+                title-url: https://login.tailscale.com/admin/machines
+                cache: 5m
+                url: https://api.tailscale.com/api/v2/tailnet/anaconda-cobia.ts.net/devices
+                headers:
+                  Authorization: Bearer ${TAILSCALE_API_KEY}
+                template: |
+                  {{ range .JSON.Array "devices" }}
+                  <div class="margin-bottom-5" style="padding: 6px 10px; border: 1px solid var(--color-separator); border-radius: 5px;">
+                    <div class="flex justify-between items-center">
+                      <div style="flex: 1;">
+                        <div class="size-h4 color-highlight">{{ trimSuffix ".anaconda-cobia.ts.net" (.String "name") }}</div>
+                        <div class="size-h6 color-subdue">
+                          {{ .String "os" }} • {{ index (.Array "addresses") 0 }}
+                        </div>
+                      </div>
+                      <div class="text-right size-h6">
+                        {{ if .Bool "updateAvailable" }}
+                          <div class="color-primary">⬆ Update</div>
+                        {{ end }}
+                        {{ $lastSeen := .String "lastSeen" }}
+                        {{ if ne $lastSeen "" }}
+                          <div class="color-positive">● Connected</div>
+                        {{ else }}
+                          <div class="color-subdue">○ Offline</div>
+                        {{ end }}
+                      </div>
+                    </div>
+                  </div>
+                  {{ end }}
+
+              - type: dns-stats
+                title: AdGuard Stats
+                service: adguard
+                url: ${ADGUARD_URL}
+                username: ${ADGUARD_USERNAME}
+                password: ${ADGUARD_PASSWORD}
+
+      # RIGHT COLUMN - Discord, AniList, Speed Test, and Scaled Controller
+      - size: small
+        widgets:
+          - type: custom-api
+            title: Discord Status
+            hide-header: true
+            cache: 30s
+            url: https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}
+            template: |
+              {{ $status := .JSON.String "data.discord_status" }}
+              {{ $username := .JSON.String "data.discord_user.username" }}
+              <div class="flex items-center gap-10">
+                <div class="relative">
+                  <img src="https://cdn.discordapp.com/avatars/{{ .JSON.String "data.discord_user.id" }}/{{ .JSON.String "data.discord_user.avatar" }}.png?size=128" alt="avatar" style="width: 60px; height: 60px; border-radius: 50%;" />
+                  <div style="position: absolute; bottom: 0; right: 0; width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--color-background); background-color: {{ if eq $status "online" }}#43b581{{ else if eq $status "idle" }}#faa61a{{ else if eq $status "dnd" }}#f04747{{ else }}#747f8d{{ end }};"></div>
+                </div>
+                <div>
+                  <div class="size-h4">{{ $username }}</div>
+                  <div class="color-subdue">{{ if eq $status "online" }}Online{{ else if eq $status "idle" }}Idle{{ else if eq $status "dnd" }}Do Not Disturb{{ else }}Offline{{ end }}</div>
+                </div>
+              </div>
+              {{ $activityName := .JSON.String "data.activities.0.name" }}{{ if $activityName }}<div class="margin-top-15"><div class="size-h6 color-subdue">ACTIVITY</div><div class="color-highlight">{{ $activityName }}</div>{{ $details := .JSON.String "data.activities.0.details" }}{{ if $details }}<div class="color-paragraph">{{ $details }}</div>{{ end }}{{ $state := .JSON.String "data.activities.0.state" }}{{ if $state }}<div class="color-subdue">{{ $state }}</div>{{ end }}</div>{{ end }}
+
+          - type: custom-api
+            hide-header: true
+            cache: 1h
+            url: https://graphql.anilist.co
+            method: POST
+            body-type: json
+            body:
+              query: |
+                query {
+                  User(name: "${ANILIST_USERNAME}") {
+                    statistics {
+                      anime { count episodesWatched minutesWatched }
+                      manga { count chaptersRead volumesRead }
+                    }
+                  }
+                }
+            template: |
+              <div class="margin-bottom-20">
+                <div class="size-h3 color-subdue margin-bottom-10">ANIME</div>
+                <div class="flex justify-between text-center gap-10">
+                  <div class="flex-1">
+                    <div class="color-highlight size-h4">{{ .JSON.Int "data.User.statistics.anime.count" }}</div>
+                    <div class="size-h6 color-subdue">Total</div>
+                  </div>
+                  <div class="flex-1">
+                    <div class="color-highlight size-h4">{{ .JSON.Int "data.User.statistics.anime.episodesWatched" }}</div>
+                    <div class="size-h6 color-subdue">Episodes</div>
+                  </div>
+                  <div class="flex-1">
+                    <div class="color-highlight size-h4">{{ div (.JSON.Int "data.User.statistics.anime.minutesWatched") 1440 }}</div>
+                    <div class="size-h6 color-subdue margin-bottom-10">Days</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="size-h3 color-subdue margin-bottom-10">MANGA</div>
+                <div class="flex justify-between text-center gap-10">
+                  <div class="flex-1">
+                    <div class="color-highlight size-h4">{{ .JSON.Int "data.User.statistics.manga.count" }}</div>
+                    <div class="size-h6 color-subdue">Total</div>
+                  </div>
+                  <div class="flex-1">
+                    <div class="color-highlight size-h4">{{ .JSON.Int "data.User.statistics.manga.chaptersRead" }}</div>
+                    <div class="size-h6 color-subdue">Chapters</div>
+                  </div>
+                  <div class="flex-1">
+                    <div class="color-highlight size-h4">{{ .JSON.Int "data.User.statistics.manga.volumesRead" }}</div>
+                    <div class="size-h6 color-subdue">Volumes</div>
+                  </div>
+                </div>
+              </div>
+
+
+
+          # Gamepad Controller with clickable title
+          - type: custom-api
+            title: Controller
+            title-url: https://controllertest.io/
+            template: |
+              <div style="height: 210px; overflow: hidden; border-radius: 8px; position: relative;">
+                <div style="position: absolute; top: 0; left: 50%; width: 750px; transform: translateX(-50%) scale(0.45); transform-origin: top center;">
+                  <iframe src="https://controllertest.io/en/embed/xbox-controller?theme=dark" width="100%" height="650" style="margin-top: -120px;" frameborder="0" allow="bluetooth; gamepad; usb; hid; midi; serial; xr-spatial-tracking" title="ControllerTest.io Widget"></iframe>
+                </div>
+              </div>

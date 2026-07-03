@@ -1,0 +1,36 @@
+services:
+  rclone-serve:
+    image: rclone/rclone:latest
+    container_name: rclone-server
+    user: "1000:1000"
+    restart: unless-stopped
+
+    command: >
+      serve sftp /data
+      --addr :9000
+      --user ${RCLONE_USER:-akshad}
+      --pass ${RCLONE_PASSWORD}
+      --vfs-cache-mode writes
+      --cache-dir /cache
+      --dir-cache-time 5s
+      --rc
+      --rc-addr :5572
+      --rc-enable-metrics
+      --rc-no-auth
+
+    ports:
+      - "9000:9000"
+
+    volumes:
+      - ./data:/data
+      - ./rclone-cache:/cache
+
+    environment:
+      - TZ=${TZ:-Asia/Kolkata}
+
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true

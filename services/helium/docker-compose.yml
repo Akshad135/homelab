@@ -1,0 +1,59 @@
+services:
+  helium-nginx:
+    container_name: helium-nginx
+    build:
+      context: ./svc
+      dockerfile: ./nginx/Dockerfile
+      args:
+        SERVICES_HOSTNAME: ${SERVICES_HOSTNAME}
+    read_only: true
+    init: true
+    shm_size: 512mb
+    tmpfs:
+      - /tmp:size=512m
+    restart: unless-stopped
+    depends_on:
+      - ubo_proxy
+      - ext_proxy
+      - ext_proxy_backup
+    networks:
+      - homelab
+
+  ubo_proxy:
+    container_name: ubo_proxy
+    build: ./svc/ubo
+    read_only: true
+    restart: unless-stopped
+    environment:
+      - UBO_PROXY_BASE_URL=${UBO_PROXY_BASE_URL}
+      - UBO_USE_ORIGINAL_UBLOCK_ASSETS=${UBO_USE_ORIGINAL_UBLOCK_ASSETS:-0}
+      - UBO_ASSETS_JSON_URL=${UBO_ASSETS_JSON_URL:-}
+      - UBO_ASSETS_JSON_SHA256=${UBO_ASSETS_JSON_SHA256:-}
+    networks:
+      - homelab
+
+  ext_proxy:
+    container_name: ext_proxy
+    build: ./svc/extension-proxy
+    read_only: true
+    restart: unless-stopped
+    environment:
+      - HMAC_SECRET=${HMAC_SECRET}
+      - PROXY_BASE_URL=${PROXY_BASE_URL}
+    networks:
+      - homelab
+
+  ext_proxy_backup:
+    container_name: ext_proxy_backup
+    build: ./svc/extension-proxy
+    read_only: true
+    restart: unless-stopped
+    environment:
+      - HMAC_SECRET=${HMAC_SECRET}
+      - PROXY_BASE_URL=${PROXY_BASE_URL}
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true
