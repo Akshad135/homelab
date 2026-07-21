@@ -1,0 +1,25 @@
+services:
+  pastebin:
+    image: akshad135/ghostbin:latest
+    container_name: pastebin-server
+    restart: unless-stopped
+
+    environment:
+      AUTH_KEY: "58toK2IgXA6ncI"
+      RUST_LOG: "info"
+      # Add your public URL to secure CORS
+      ALLOWED_ORIGINS: "https://akshad.duckdns.org:8005"
+
+    volumes:
+      - pastebin_pastebin-data:/app/data
+
+    networks:
+      - homelab
+
+volumes:
+  pastebin_pastebin-data:
+    external: true
+
+networks:
+  homelab:
+    external: true

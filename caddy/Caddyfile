@@ -32,6 +32,12 @@ https://akshad.duckdns.org:8004 {
     reverse_proxy ignis:8080
 }
 
+# 8005: Pastebin
+https://akshad.duckdns.org:8005 {
+    import common_tls
+    reverse_proxy pastebin-server:8788
+}
+
 # 9001: Helium (browser extension backend)
 https://akshad.duckdns.org:9001 {
     import common_tls
