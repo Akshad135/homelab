@@ -15,6 +15,7 @@ Oracle free tier ARM VM doing way more than Oracle intended. Everything runs ins
 | `https://akshad.duckdns.org:8002` | Vaultwarden  | Passwords                                |
 | `https://akshad.duckdns.org:8003` | Bookmarks    | Personal link shelf                      |
 | `https://akshad.duckdns.org:8004` | Ignis        | Obsidian LiveSync backend                |
+| `https://akshad.duckdns.org:8006` | Sure         | Personal finance tracker                 |
 | `akshad.duckdns.org:9000`         | rclone SFTP  | Windows <-> Oracle <-> android file sync |
 | `https://akshad.duckdns.org:9001` | Helium       | Self-hosted browser extension backend    |
 

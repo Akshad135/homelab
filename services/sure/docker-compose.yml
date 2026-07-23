@@ -1,0 +1,75 @@
+services:
+  sure-web:
+    image: ghcr.io/we-promise/sure:stable
+    container_name: sure-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - sure-app-storage:/rails/storage
+    depends_on:
+      sure-db:
+        condition: service_healthy
+      sure-redis:
+        condition: service_healthy
+    networks:
+      - homelab
+      - sure-net
+
+  sure-worker:
+    image: ghcr.io/we-promise/sure:stable
+    container_name: sure-worker
+    command: bundle exec sidekiq
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - sure-app-storage:/rails/storage
+    depends_on:
+      sure-db:
+        condition: service_healthy
+      sure-redis:
+        condition: service_healthy
+    networks:
+      - sure-net
+
+  sure-db:
+    image: postgres:16
+    container_name: sure-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - sure-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-sure_user} -d $${POSTGRES_DB:-sure_production}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sure-net
+
+  sure-redis:
+    image: redis:latest
+    container_name: sure-redis
+    restart: unless-stopped
+    volumes:
+      - sure-redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sure-net
+
+volumes:
+  sure-app-storage:
+  sure-postgres-data:
+  sure-redis-data:
+
+networks:
+  homelab:
+    external: true
+  sure-net:
+    driver: bridge

@@ -38,6 +38,13 @@ https://akshad.duckdns.org:8005 {
     reverse_proxy pastebin-server:8788
 }
 
+# 8006: Sure (Personal Finance Tracker)
+https://akshad.duckdns.org:8006 {
+    import common_tls
+    reverse_proxy sure-web:3000
+}
+
+
 # 9001: Helium (browser extension backend)
 https://akshad.duckdns.org:9001 {
     import common_tls
