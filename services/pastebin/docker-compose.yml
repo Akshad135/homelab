@@ -5,10 +5,9 @@ services:
     restart: unless-stopped
 
     environment:
-      AUTH_KEY: "58toK2IgXA6ncI"
+      AUTH_KEY: "${AUTH_KEY:-your_auth_key_here}"
       RUST_LOG: "info"
-      # Add your public URL to secure CORS
-      ALLOWED_ORIGINS: "https://akshad.duckdns.org:8005"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-https://akshad.duckdns.org:8005}"
 
     volumes:
       - pastebin_pastebin-data:/app/data

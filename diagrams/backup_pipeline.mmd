@@ -1,0 +1,7 @@
+flowchart LR
+    cron["Cron (Daily 02:00)"] --> script["vw-json-backup.sh"]
+    script --> cli["Bitwarden CLI (bw login --apikey)"]
+    cli --> unlock["bw unlock & export encrypted JSON"]
+    unlock --> local["Local Backup Storage<br/>/data/Backup Codes/"]
+    local --> purge["Purge Policy (Keep 2 newest)"]
+    local -.-> sync["rclone Bisync (Windows / Android)"]

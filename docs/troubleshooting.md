@@ -146,3 +146,28 @@ DOMAIN: "https://akshad.duckdns.org:8002"
 ```
 
 The Bitwarden mobile app also needs to be pointed at this URL.
+
+---
+
+## Docker Hub Pull Rate Limit (`429 Too Many Requests`)
+
+### Symptoms
+When running `docker compose pull` or `docker pull`, daemon errors with:
+```
+toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit
+```
+
+### Cause
+Docker Hub enforces an anonymous limit of 100 pulls per hour per IP. Oracle Cloud egress IPs are shared or quickly exhaust this pool.
+
+### Solution
+1. **Option A (Log in with free Docker Hub account):**
+   ```bash
+   docker login
+   ```
+   Free personal accounts receive 200 pulls per 6 hours tied to the account instead of the host IP.
+2. **Option B (Pull locally via crane and stream over Tailscale):**
+   ```bash
+   crane pull <image> /tmp/img.tar --platform linux/arm64
+   tailscale ssh ubuntu@oracle 'docker load' < /tmp/img.tar
+   ```

@@ -1,79 +1,55 @@
 # Networking & DNS
 
-Wasted 10hrs on 2nd July which motivated me to make this repo 🥲
-
 ---
 
 ## Tailscale
 
-Tailscale connects Oracle, Windows, and Android in a mesh. Oracle acts as the exit node.
+Tailscale connects Oracle, Linux, Windows, and Android in an encrypted mesh. Oracle acts as the exit node and central homelab host.
 
 Key setting in Tailscale admin:
 
 - **Override DNS** → `100.109.80.25` (Oracle Tailscale IP)
 
-This makes every device on the tailnet send DNS queries to AdGuard on the Oracle VM. MagicDNS is still on so `*.ts.net` names resolve, but none of the services use them anymore.
+This routes every device on the tailnet to send DNS queries to AdGuard Home on the Oracle VM. MagicDNS is preserved so `*.ts.net` names resolve, while our homelab services use `akshad.duckdns.org`.
 
 ---
 
-## The DNS Rewrite
+## The DNS Rewrite (Split-Horizon)
 
-DuckDNS points `akshad.duckdns.org` to Oracle's public IP. But Oracle's public IP has no open ports except SSH. So inside AdGuard we override it:
+DuckDNS points `akshad.duckdns.org` to Oracle's public IP. But Oracle's public IP has no open web ports. Inside AdGuard, we rewrite the domain to the Tailscale IP:
 
-![DNS & Split-Horizon Flow](../diagrams/dns_flow.png)
+```
+akshad.duckdns.org → 100.109.80.25
+```
 
-Every device using AdGuard (all of them, via Tailscale override DNS) now resolves the domain to the Tailscale IP. Traffic goes through the mesh, not the public internet. This is split-horizon DNS — sounds fancy, it's literally one entry in AdGuard's DNS Rewrites page.
+Every device using AdGuard resolves the domain directly to the Tailscale IP. Traffic routes through the WireGuard mesh, never traversing the public internet.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Device as Tailscale Device (Client)
+    participant Tailscale as Tailscale Override DNS
+    participant AdGuard as AdGuard Home (Oracle)
+    participant Unbound as Unbound (Recursive)
+    participant Caddy as Caddy (100.109.80.25)
+    participant Root as Root DNS Servers
+
+    Device->>Tailscale: Query akshad.duckdns.org:8002
+    Tailscale->>AdGuard: Forward DNS to 100.109.80.25:53
+    alt Split-Horizon Match: akshad.duckdns.org
+        AdGuard-->>Device: Return 100.109.80.25 (Tailscale IP)
+        Device->>Caddy: HTTPS Request to 100.109.80.25:8002
+    else Other Domain (e.g. github.com)
+        AdGuard->>Unbound: Forward query to unbound:53
+        Unbound->>Root: Recursive Root Resolution
+        Root-->>Unbound: IP Answer
+        Unbound-->>AdGuard: Cache & Return IP
+        AdGuard-->>Device: Return resolved public IP
+    end
+```
 
 ---
 
 ## AdGuard + Unbound
 
-AdGuard handles:
-
-- Blocking ads and trackers via community lists
-- The DuckDNS rewrite
-- Forwarding everything else to Unbound
-
-Unbound handles:
-
-- Recursive resolution — queries root servers directly instead of forwarding to Cloudflare/Google
-- Runs as a sidecar container in the same AdGuard compose stack
-
----
-
-## Docker Networking
-
-All containers share a bridge network called `homelab`. This is how Caddy finds services:
-
-```
-reverse_proxy vaultwarden:80
-              ^-- Docker resolves this to the container IP
-```
-
-Containers that don't need direct host access have no published ports at all. Glance health checks run over this internal network too — `http://adguardhome` instead of going out through Caddy.
-
-Things that do publish host ports:
-
-- **Caddy** — web entry point, needs to be reachable
-- **AdGuard** — DNS (53) and DoT (853) are native protocols, can't go through a reverse proxy
-- **rclone** — SFTP is a binary protocol, Caddy can't proxy it
-
----
-
-## rclone SFTP
-
-Windows connects directly to the Oracle Tailscale IP on port 9000, bypassing Caddy:
-
-```ini
-[oracle-sftp]
-type = sftp
-host = 100.109.80.25
-port = 9000
-user = akshad
-```
-
-Sync command:
-
-```bat
-rclone bisync "oracle-sftp:/" "C:\Users\akshad\Documents\sync" --create-empty-src-dirs -v
-```
+AdGuard acts as the DNS ad-blocker and DNS rewrite engine. For recursive resolving of internet queries, AdGuard forwards upstream requests to Unbound running in the same Docker network (`unbound:53`). Unbound queries root DNS nameservers directly.

@@ -1,36 +1,32 @@
 # Backups
 
-![Backup & Rclone Pipeline](../diagrams/backup_pipeline.png)
+```mermaid
+flowchart LR
+    cron["Cron (Daily 02:00)"] --> script["vw-json-backup.sh"]
+    script --> cli["Bitwarden CLI (bw login --apikey)"]
+    cli --> unlock["bw unlock & export encrypted JSON"]
+    unlock --> local["Local Backup Storage<br/>/data/Backup Codes/"]
+    local --> purge["Purge Policy (Keep 2 newest)"]
+    local -.-> sync["rclone Bisync (Windows / Android)"]
+```
 
 ## Vaultwarden (Daily JSON Export)
 
-A cron job runs every night at 2am and exports the vault to JSON using the Bitwarden CLI. Keeps the last 7 exports.
+A cron job runs every night at 2:00 AM and exports the vault to encrypted JSON using the Bitwarden CLI. It retains the 2 most recent backups.
 
-Script: [`../scripts/vw-json-backup.sh`](../scripts/vw-json-backup.sh)
-Cron: `0 2 * * * /home/ubuntu/vw-json-backup.sh`
+- Script: [`../scripts/vw-json-backup.sh`](../scripts/vw-json-backup.sh)
+- Cron: `0 2 * * * /home/ubuntu/vw-json-backup.sh > /dev/null 2>&1`
 
-To restore: Vaultwarden web UI -> Tools -> Import -> Bitwarden (JSON)
+To restore: Vaultwarden Web UI -> Tools -> Import Data -> Bitwarden (JSON).
 
 ---
 
 ## Documents (rclone Bisync)
 
-Windows <-> Oracle <-> Android sync via rclone SFTP on port 9000. Runs on demand from Windows and Android. Bidirectional, so changes from either side show up on the other.
+Windows <-> Oracle <-> Android file sync via rclone SFTP on port `9000`. Runs on demand or via task scheduler across devices.
 
 ---
 
 ## AdGuard Config
 
-`AdGuardHome.yaml` has the blocklists, DNS rewrites, and credentials. Doesn't change often so manual backup when it does is fine:
-
-```bash
-cp -r ~/adguard-home/conf ~/backups/adguard-$(date +%Y%m%d)
-```
-
----
-
-## This Repo
-
-Compose files, Caddyfile, and docs are all here. Committing changes here is the backup for "how to rebuild the whole thing."
-
----
+`AdGuardHome.yaml` contains blocklists, DNS rewrites, and settings. Backed up manually upon major changes.

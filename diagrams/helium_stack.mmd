@@ -1,0 +1,5 @@
+flowchart TD
+    caddy["Caddy (Port 9001)"] --> nginx["helium-nginx (Port 80)"]
+    nginx --> ext["ext_proxy (Deno / Alpine)"]
+    nginx --> ext_backup["ext_proxy_backup (Deno / Alpine)"]
+    nginx --> ubo["ubo_proxy (Deno / Alpine)"]

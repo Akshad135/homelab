@@ -1,0 +1,47 @@
+flowchart TB
+    subgraph Clients["Tailscale Mesh Devices"]
+        phone["Android (Samsung)"]
+        laptop["Linux (Omarchy)"]
+        desktop["Windows (IdeaPad)"]
+    end
+
+    subgraph Tailnet["Tailscale Network (Encrypted WireGuard Mesh)"]
+        dns_override["Tailscale DNS Override<br/>100.109.80.25"]
+    end
+
+    subgraph Oracle["Oracle Cloud Free-Tier VM (Ubuntu ARM64)"]
+        subgraph Ingress["Ingress & Edge"]
+            caddy["Caddy Reverse Proxy<br/>Ports 80, 443, 8000-8099, 9001<br/>TLS: akshad.crt / akshad.key"]
+            acme["acme.sh (Cron)<br/>DuckDNS DNS-01 Challenge"]
+        end
+
+        subgraph DNS["DNS & Resolution"]
+            adguard["AdGuard Home (:53, :853)<br/>Split-Horizon Rewrite:<br/>akshad.duckdns.org -> 100.109.80.25"]
+            unbound["Unbound Recursive Resolver<br/>Root DNS queries (:5335)"]
+        end
+
+        subgraph HomelabNet["Docker Network: homelab"]
+            glance["Glance Dashboard (:8080)<br/>https://akshad.duckdns.org"]
+            vw["Vaultwarden (:80)<br/>:8002"]
+            bm["Bookmarks (:3000)<br/>:8003"]
+            ignis["Ignis LiveSync (:8080)<br/>:8004"]
+            pastebin["Ghostbin Pastebin (:8788)<br/>:8005"]
+            helium_nginx["Helium Nginx (:80)<br/>:9001"]
+            helium_proxies["ext_proxy / ubo_proxy<br/>Deno Proxies"]
+            rclone["rclone SFTP Server (:9000)<br/>akshad.duckdns.org:9000"]
+        end
+    end
+
+    Clients --> Tailnet
+    Tailnet --> Oracle
+    dns_override --> adguard
+    adguard --> unbound
+    caddy --> glance
+    caddy --> adguard
+    caddy --> vw
+    caddy --> bm
+    caddy --> ignis
+    caddy --> pastebin
+    caddy --> helium_nginx
+    helium_nginx --> helium_proxies
+    acme -.-> Ingress

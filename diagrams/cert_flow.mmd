@@ -1,0 +1,13 @@
+flowchart TD
+    cron["Daily Cron Job<br/>(acme.sh --cron)"] --> check{"Cert expires<br/>in < 30 days?"}
+    check -- No --> done["Nothing to do"]
+    check -- Yes --> acme["acme.sh Request"]
+    
+    subgraph Challenge["DNS-01 Challenge (No open ports needed)"]
+        acme --> duckapi["DuckDNS API<br/>Add TXT record _acme-challenge.akshad.duckdns.org"]
+        duckapi --> le["Let's Encrypt CA<br/>Verifies TXT record via DNS"]
+    end
+
+    le --> issue["Issue Certificate"]
+    issue --> install["Install into /home/ubuntu/certs/<br/>akshad.crt & akshad.key"]
+    install --> reload["Restart / Reload Caddy & AdGuard"]

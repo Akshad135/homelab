@@ -1,0 +1,39 @@
+flowchart LR
+    client["Client over Tailscale<br/>(akshad.duckdns.org)"]
+
+    subgraph Caddy["Caddy Reverse Proxy (Single TLS Cert)"]
+        p443["Port 443"]
+        p8001["Port 8001"]
+        p8002["Port 8002"]
+        p8003["Port 8003"]
+        p8004["Port 8004"]
+        p8005["Port 8005"]
+        p9001["Port 9001"]
+    end
+
+    subgraph Host["Host Direct Ports"]
+        p9000["Port 9000 (SFTP)"]
+        p53["Port 53 / 853 (DNS)"]
+    end
+
+    subgraph Backend["Docker Containers (homelab network)"]
+        glance["glance:8080"]
+        adguard["adguardhome:80"]
+        vw["vaultwarden:80"]
+        bm["bookmark-manager:3000"]
+        ignis["ignis:8080"]
+        pastebin["pastebin-server:8788"]
+        helium["helium-nginx:80"]
+        rclone["rclone-server:9000"]
+        dns["adguardhome:53 / :853"]
+    end
+
+    client --> p443 --> glance
+    client --> p8001 --> adguard
+    client --> p8002 --> vw
+    client --> p8003 --> bm
+    client --> p8004 --> ignis
+    client --> p8005 --> pastebin
+    client --> p9001 --> helium
+    client --> p9000 --> rclone
+    client --> p53 --> dns

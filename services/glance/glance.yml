@@ -28,42 +28,41 @@ pages:
 
           - type: weather
             hide-header: true
-            location: Bengaluru,India
+            location: ${LOCATION_NAME}
             units: metric
 
           - type: custom-api
             title: Air Quality
             hide-header: true
-            cache: 10m
-            url: https://api.waqi.info/feed/geo:12.9719;77.5772/?token=${WAQI_API_TOKEN}
+            cache: 15m
+            url: https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LOCATION_LATITUDE}&longitude=${LOCATION_LONGITUDE}&current=us_aqi,pm10,pm2_5,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide&timezone=auto
             template: |
-              {{ $aqiraw := .JSON.Int "data.aqi" }}
-              {{ $aqi := printf "%03d" $aqiraw }}
-              {{ $updated := .JSON.String "data.time.iso" }}
+              {{ $aqi := .JSON.Int "current.us_aqi" }}
+              {{ $time := .JSON.String "current.time" }}
 
               <div class="flex justify-between items-end">
                 <div>
                   <div class="size-h5">
-                    {{ if le $aqi "050" }}<div class="color-positive">Good Air Quality</div>
-                    {{ else if le $aqi "100" }}<div class="color-primary">Moderate Air Quality</div>
-                    {{ else if le $aqi "150" }}<div class="color-primary">Unhealthy for Sensitive</div>
-                    {{ else if le $aqi "200" }}<div class="color-negative">Unhealthy Air Quality</div>
-                    {{ else if le $aqi "300" }}<div class="color-negative">Very Unhealthy</div>
+                    {{ if le $aqi 50 }}<div class="color-positive">Good Air Quality</div>
+                    {{ else if le $aqi 100 }}<div class="color-primary">Moderate Air Quality</div>
+                    {{ else if le $aqi 150 }}<div class="color-primary">Unhealthy for Sensitive</div>
+                    {{ else if le $aqi 200 }}<div class="color-negative">Unhealthy Air Quality</div>
+                    {{ else if le $aqi 300 }}<div class="color-negative">Very Unhealthy</div>
                     {{ else }}<div class="color-negative">Hazardous Air Quality</div>
                     {{ end }}
                   </div>
-                  <div class="color-highlight size-h3" style="margin-top: 5px;">AQI: {{ $aqiraw }}</div>
+                  <div class="color-highlight size-h3" style="margin-top: 5px;">AQI: {{ $aqi }}</div>
                 </div>
-                <div class="size-h6 color-subdue" style="margin-bottom: 5px;">Updated: {{ slice $updated 11 16 }}</div>
+                <div class="size-h6 color-subdue" style="margin-bottom: 5px;">Updated: {{ slice $time 11 16 }}</div>
               </div>
 
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; border-top: 1px solid var(--color-separator); padding-top: 15px; margin-top: 10px;">
-                {{ if .JSON.Exists "data.iaqi.pm25.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.pm25.v" }}</div><div class="size-h6">PM2.5</div></div>{{ end }}
-                {{ if .JSON.Exists "data.iaqi.pm10.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.pm10.v" }}</div><div class="size-h6">PM10</div></div>{{ end }}
-                {{ if .JSON.Exists "data.iaqi.h.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.h.v" }}%</div><div class="size-h6">HUMIDITY</div></div>{{ end }}
-                {{ if .JSON.Exists "data.iaqi.t.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.t.v" }}°C</div><div class="size-h6">TEMP</div></div>{{ end }}
-                {{ if .JSON.Exists "data.iaqi.p.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Int "data.iaqi.p.v" }}</div><div class="size-h6">PRESSURE</div></div>{{ end }}
-                {{ if .JSON.Exists "data.iaqi.o3.v" }}<div><div class="size-h3 color-highlight">{{ .JSON.Float "data.iaqi.o3.v" }}</div><div class="size-h6">OZONE</div></div>{{ end }}
+                {{ if .JSON.Exists "current.pm2_5" }}<div><div class="size-h3 color-highlight">{{ printf "%.1f" (.JSON.Float "current.pm2_5") }}</div><div class="size-h6">PM2.5</div></div>{{ end }}
+                {{ if .JSON.Exists "current.pm10" }}<div><div class="size-h3 color-highlight">{{ printf "%.1f" (.JSON.Float "current.pm10") }}</div><div class="size-h6">PM10</div></div>{{ end }}
+                {{ if .JSON.Exists "current.ozone" }}<div><div class="size-h3 color-highlight">{{ printf "%.1f" (.JSON.Float "current.ozone") }}</div><div class="size-h6">OZONE</div></div>{{ end }}
+                {{ if .JSON.Exists "current.nitrogen_dioxide" }}<div><div class="size-h3 color-highlight">{{ printf "%.1f" (.JSON.Float "current.nitrogen_dioxide") }}</div><div class="size-h6">NO₂</div></div>{{ end }}
+                {{ if .JSON.Exists "current.sulphur_dioxide" }}<div><div class="size-h3 color-highlight">{{ printf "%.1f" (.JSON.Float "current.sulphur_dioxide") }}</div><div class="size-h6">SO₂</div></div>{{ end }}
+                {{ if .JSON.Exists "current.carbon_monoxide" }}<div><div class="size-h3 color-highlight">{{ printf "%.0f" (.JSON.Float "current.carbon_monoxide") }}</div><div class="size-h6">CO</div></div>{{ end }}
               </div>
 
       # CENTER COLUMN - Stats, Quick Links/Services, and Tailscale/Adguard
@@ -92,52 +91,57 @@ pages:
           # First row of center panels - Quick Links & Services
           - type: monitor
             cache: 1m
-            title: Services
+            hide-header: true
             sites:
               - title: Vaultwarden
-                url: https://akshad.duckdns.org:8002
+                url: ${VAULTWARDEN_URL}
                 icon: si:vaultwarden
-                same-tab: false
+                same-tab: true
                 check-url: http://vaultwarden
               - title: AdGuard Home
-                url: https://akshad.duckdns.org:8001
-                check-url: http://adguardhome
+                url: ${ADGUARD_WEB_URL}
+                check-url: ${ADGUARD_INTERNAL_URL}
                 icon: di:adguard-home
-                same-tab: false
+                same-tab: true
               - title: Rclone
-                url: sftp://akshad.duckdns.org:9000
+                url: ${RCLONE_URL}
                 check-url: http://rclone-server:5572/metrics
                 icon: si:rclone
-                same-tab: false
+                same-tab: true
               - title: Obsidian
-                url: https://akshad.duckdns.org:8004
+                url: ${OBSIDIAN_URL}
                 check-url: http://ignis:8080/
                 icon: si:obsidian
-                same-tab: false
+                same-tab: true
               - title: Helium
-                url: https://akshad.duckdns.org:9001
+                url: ${HELIUM_URL}
                 check-url: http://helium-nginx/robots.txt
                 icon: mdi:atom
-                same-tab: false
+                same-tab: true
               - title: Bookmarks
-                url: https://akshad.duckdns.org:8003
+                url: ${BOOKMARKS_URL}
                 check-url: http://bookmark-manager:3000/api/health
                 icon: mdi:bookmark
+                same-tab: true
               - title: Pastebin
-                url: https://pastebin-personal.akshad-agrawal1978.workers.dev/
+                url: ${PASTEBIN_URL}
+                check-url: http://pastebin-server:8788/api/ping
                 icon: mdi:clipboard-text
+                same-tab: true
 
           # Second row of center panels - Tailscale & DNS
           - type: split-column
             widgets:
               - type: custom-api
-                title: Tailscale Devices
-                title-url: https://login.tailscale.com/admin/machines
+                hide-header: true
                 cache: 5m
-                url: https://api.tailscale.com/api/v2/tailnet/anaconda-cobia.ts.net/devices
+                url: https://api.tailscale.com/api/v2/tailnet/-/devices
                 headers:
                   Authorization: Bearer ${TAILSCALE_API_KEY}
                 template: |
+                  <div class="widget-header" style="padding: 0;">
+                    <h2 class="uppercase"><a href="https://login.tailscale.com/admin/machines">Tailscale Devices</a></h2>
+                  </div>
                   {{ range .JSON.Array "devices" }}
                   <div class="margin-bottom-5" style="padding: 6px 10px; border: 1px solid var(--color-separator); border-radius: 5px;">
                     <div class="flex justify-between items-center">
@@ -162,12 +166,137 @@ pages:
                   </div>
                   {{ end }}
 
-              - type: dns-stats
-                title: AdGuard Stats
-                service: adguard
-                url: ${ADGUARD_URL}
-                username: ${ADGUARD_USERNAME}
-                password: ${ADGUARD_PASSWORD}
+              - type: custom-api
+                hide-header: true
+                cache: 10m
+                url: ${ADGUARD_INTERNAL_URL}/control/stats
+                headers:
+                  Authorization: Basic ${ADGUARD_AUTH}
+                template: |
+                  <div class="widget-small-content-bounds dns-stats">
+                    <div class="widget-header" style="padding: 0;">
+                      <h2 class="uppercase"><a href="${ADGUARD_WEB_URL}">AdGuard Stats</a></h2>
+                    </div>
+
+                    {{ $total := .JSON.Int "num_dns_queries" }}
+                    {{ $blocked := .JSON.Int "num_blocked_filtering" }}
+                    {{ $percent := 0 }}
+                    {{ if gt $total 0 }}{{ $percent = div (mul $blocked 100) $total }}{{ end }}
+
+                    <div class="flex text-center justify-between dns-stats-totals">
+                      <div>
+                        <div class="color-highlight size-h3">{{ formatNumber $total }}</div>
+                        <div class="size-h6">QUERIES</div>
+                      </div>
+                      <div>
+                        <div class="color-highlight size-h3">{{ $percent }}%</div>
+                        <div class="size-h6">BLOCKED</div>
+                      </div>
+                      <div>
+                        <div class="color-highlight size-h3">{{ toInt (mul (.JSON.Float "avg_processing_time") 1000) }}ms</div>
+                        <div class="size-h6">LATENCY</div>
+                      </div>
+                    </div>
+
+                    {{ $queries := .JSON.Array "dns_queries" }}
+                    {{ $blockedSeries := .JSON.Array "blocked_filtering" }}
+                    {{ if and (ge (len $queries) 24) (ge (len $blockedSeries) 24) }}
+                      {{ $max := 0 }}
+                      {{ $offset := sub (len $queries) 24 }}
+                      {{ range $i, $item := $queries }}
+                        {{ if ge $i $offset }}
+                          {{ $v := $item.Int "" }}
+                          {{ if gt $v $max }}{{ $max = $v }}{{ end }}
+                        {{ end }}
+                      {{ end }}
+                      <div class="dns-stats-graph margin-top-15" style="--graph-height: 115px;">
+                        <div class="dns-stats-graph-gridlines-container">
+                          <svg class="dns-stats-graph-gridlines" shape-rendering="crispEdges" viewBox="0 0 1 100" preserveAspectRatio="none">
+                            <g stroke="var(--color-graph-gridlines)" stroke-width="1">
+                              <line x1="0" y1="1" x2="1" y2="1" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="15" x2="1" y2="15" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="29" x2="1" y2="29" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="43" x2="1" y2="43" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="57" x2="1" y2="57" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="71" x2="1" y2="71" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="85" x2="1" y2="85" vector-effect="non-scaling-stroke" />
+                              <line x1="0" y1="99" x2="1" y2="99" vector-effect="non-scaling-stroke" stroke="var(--color-progress-bar-border)"/>
+                            </g>
+                          </svg>
+                        </div>
+                        <div class="dns-stats-graph-columns">
+                          {{ range $i := 8 }}
+                            {{ $start := add $offset (mul $i 3) }}
+                            {{ $q0 := index $queries $start }}
+                            {{ $q1 := index $queries (add $start 1) }}
+                            {{ $q2 := index $queries (add $start 2) }}
+                            {{ $b0 := index $blockedSeries $start }}
+                            {{ $b1 := index $blockedSeries (add $start 1) }}
+                            {{ $b2 := index $blockedSeries (add $start 2) }}
+                            {{ $q0v := $q0.Int "" }}
+                            {{ $q1v := $q1.Int "" }}
+                            {{ $q2v := $q2.Int "" }}
+                            {{ $b0v := $b0.Int "" }}
+                            {{ $b1v := $b1.Int "" }}
+                            {{ $b2v := $b2.Int "" }}
+                            {{ $q := add (add $q0v $q1v) $q2v }}
+                            {{ $b := add (add $b0v $b1v) $b2v }}
+                            {{ $percentTotal := 0 }}
+                            {{ if gt $max 0 }}{{ $percentTotal = div (mul $q 100) $max }}{{ end }}
+                            {{ $percentBlocked := 0 }}
+                            {{ if gt $q 0 }}{{ $percentBlocked = div (mul $b 100) $q }}{{ end }}
+                            <div class="dns-stats-graph-column" data-popover-type="html" data-popover-position="above" data-popover-show-delay="500">
+                              <div data-popover-html>
+                                <div class="flex text-center justify-between gap-25">
+                                  <div>
+                                    <div class="color-highlight size-h3">{{ formatNumber $q }}</div>
+                                    <div class="size-h6">QUERIES</div>
+                                  </div>
+                                  <div>
+                                    <div class="color-highlight size-h3">{{ $percentBlocked }}%</div>
+                                    <div class="size-h6">BLOCKED</div>
+                                  </div>
+                                </div>
+                              </div>
+                              {{ if gt $percentTotal 0 }}
+                              <div class="dns-stats-graph-bar" style="--bar-height: {{ $percentTotal }}">
+                                {{ if ne $q $b }}<div class="queries"></div>{{ end }}
+                                {{ if gt $percentBlocked 0 }}<div class="blocked" style="--percent: {{ $percentBlocked }}%"></div>{{ end }}
+                              </div>
+                              {{ end }}
+                              <div class="dns-stats-graph-time">{{ formatTime "3PM" (offsetNow (printf "-%dh" (sub 24 (mul $i 3)))) }}</div>
+                            </div>
+                          {{ end }}
+                        </div>
+                      </div>
+                    {{ end }}
+
+                    {{ $top := .JSON.Array "top_blocked_domains" }}
+                    {{ if gt (len $top) 0 }}
+                    <details class="details margin-top-40">
+                      <summary class="summary">Top blocked domains</summary>
+                      <ul class="list list-gap-4 list-with-transition size-h5">
+                        {{ range $i := 5 }}
+                          {{ if lt $i (len $top) }}
+                            {{ $obj := index $top $i }}
+                            {{ $keys := $obj.Array "@keys" }}
+                            {{ if gt (len $keys) 0 }}
+                              {{ $key := (index $keys 0).String "" }}
+                              {{ $keyEscaped := replaceAll "." "\\." $key }}
+                              {{ $count := $obj.Int $keyEscaped }}
+                              {{ $pct := 0 }}
+                              {{ if gt $blocked 0 }}{{ $pct = div (mul $count 100) $blocked }}{{ end }}
+                              <li class="flex justify-between gap-10">
+                                <div class="text-truncate rtl">{{ $key }}</div>
+                                <div class="text-right" style="width: 4rem;"><span class="color-highlight">{{ $pct }}</span>%</div>
+                              </li>
+                            {{ end }}
+                          {{ end }}
+                        {{ end }}
+                      </ul>
+                    </details>
+                    {{ end }}
+                  </div>
 
       # RIGHT COLUMN - Discord, AniList, Speed Test, and Scaled Controller
       - size: small
@@ -244,15 +373,30 @@ pages:
                 </div>
               </div>
 
-
-
-          # Gamepad Controller with clickable title
-          - type: custom-api
-            title: Controller
-            title-url: https://controllertest.io/
-            template: |
-              <div style="height: 210px; overflow: hidden; border-radius: 8px; position: relative;">
-                <div style="position: absolute; top: 0; left: 50%; width: 750px; transform: translateX(-50%) scale(0.45); transform-origin: top center;">
-                  <iframe src="https://controllertest.io/en/embed/xbox-controller?theme=dark" width="100%" height="650" style="margin-top: -120px;" frameborder="0" allow="bluetooth; gamepad; usb; hid; midi; serial; xr-spatial-tracking" title="ControllerTest.io Widget"></iframe>
-                </div>
-              </div>
+          - type: bookmarks
+            hide-header: true
+            groups:
+              - title: Caseniti
+                same-tab: true
+                links:
+                  - title: PostHog
+                    url: https://us.posthog.com/project/353535/home
+                    icon: si:posthog
+                  - title: Supabase
+                    url: https://supabase.com/dashboard/project/junoafykwzvcdovunhxb
+                    icon: si:supabase
+                  - title: lawl
+                    url: https://github.com/nikhil-mat/lawl
+                    icon: si:github
+                  - title : expo
+                    url : https://expo.dev/accounts/akshad_agrawal/projects/caseniti
+                    icon : si:expo
+              - title: Browser Games
+                same-tab: true
+                links:
+                  - title: PocketArena
+                    url: https://pocketarena.org/play
+                    icon: si:pokemon
+                  - title: Pokemon Survivors
+                    url: https://pokemonsurvivors.com/
+                    icon: si:pokemon
