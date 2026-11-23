@@ -49,4 +49,4 @@ sequenceDiagram
 
 ## AdGuard Upstream (Cloudflare 1.1.1.1 + Quad9 9.9.9.9)
 
-AdGuard acts as the DNS ad-blocker and DNS rewrite engine. For recursive resolving of internet queries, AdGuard forwards upstream requests directly to Cloudflare DNS (`1.1.1.1` and `1.0.0.1`).
+AdGuard acts as the DNS ad-blocker and DNS rewrite engine. For recursive resolving of internet queries, AdGuard forwards upstream requests in parallel to Cloudflare (`1.1.1.1` / `1.0.0.1`) and Quad9 (`9.9.9.9` / `149.112.112.112`).
