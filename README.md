@@ -49,7 +49,7 @@ flowchart TB
 
         subgraph DNS["DNS & Resolution"]
             adguard["AdGuard Home (:53, :853)<br/>Split-Horizon Rewrite:<br/>akshad.duckdns.org -> 100.109.80.25"]
-            unbound["Unbound Recursive Resolver<br/>Root DNS queries (:5335)"]
+            cloudflare["Cloudflare Upstream DNS<br/>1.1.1.1 / 1.0.0.1"]
         end
 
         subgraph HomelabNet["Docker Network: homelab"]
@@ -67,7 +67,7 @@ flowchart TB
     Clients --> Tailnet
     Tailnet --> Oracle
     dns_override --> adguard
-    adguard --> unbound
+    adguard --> cloudflare
     caddy --> glance
     caddy --> adguard
     caddy --> vw
@@ -101,7 +101,7 @@ Each service folder has a compose file, and whatever extra config it needs.
 ## If I Ever Have to Rebuild This
 
 1. Create the Docker network: `docker network create homelab`
-2. Start AdGuard + Unbound first — everything needs DNS
+2. Start AdGuard first — everything needs DNS
 3. Set Tailscale override DNS to the Oracle Tailscale IP (`100.109.80.25`)
 4. Add the AdGuard DNS rewrite: `akshad.duckdns.org → 100.109.80.25`
 5. Issue the ACME cert (see [`docs/ssl.md`](docs/ssl.md))

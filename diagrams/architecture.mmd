@@ -17,7 +17,7 @@ flowchart TB
 
         subgraph DNS["DNS & Resolution"]
             adguard["AdGuard Home (:53, :853)<br/>Split-Horizon Rewrite:<br/>akshad.duckdns.org -> 100.109.80.25"]
-            unbound["Unbound Recursive Resolver<br/>Root DNS queries (:5335)"]
+            cloudflare["Cloudflare Upstream DNS<br/>1.1.1.1 / 1.0.0.1"]
         end
 
         subgraph HomelabNet["Docker Network: homelab"]
@@ -35,7 +35,7 @@ flowchart TB
     Clients --> Tailnet
     Tailnet --> Oracle
     dns_override --> adguard
-    adguard --> unbound
+    adguard --> cloudflare
     caddy --> glance
     caddy --> adguard
     caddy --> vw

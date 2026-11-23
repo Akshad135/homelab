@@ -13,16 +13,6 @@ services:
       - /home/ubuntu/certs:/opt/adguardhome/certs:ro
     networks:
       - homelab
-    depends_on:
-      - unbound
-
-  unbound:
-    image: klutchell/unbound
-    container_name: unbound
-    restart: unless-stopped
-    hostname: unbound
-    networks:
-      - homelab
 
 networks:
   homelab:

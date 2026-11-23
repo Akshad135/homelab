@@ -30,9 +30,8 @@ sequenceDiagram
     actor Device as Tailscale Device (Client)
     participant Tailscale as Tailscale Override DNS
     participant AdGuard as AdGuard Home (Oracle)
-    participant Unbound as Unbound (Recursive)
     participant Caddy as Caddy (100.109.80.25)
-    participant Root as Root DNS Servers
+    participant Cloudflare as Cloudflare Upstream (1.1.1.1)
 
     Device->>Tailscale: Query akshad.duckdns.org:8002
     Tailscale->>AdGuard: Forward DNS to 100.109.80.25:53
@@ -40,16 +39,14 @@ sequenceDiagram
         AdGuard-->>Device: Return 100.109.80.25 (Tailscale IP)
         Device->>Caddy: HTTPS Request to 100.109.80.25:8002
     else Other Domain (e.g. github.com)
-        AdGuard->>Unbound: Forward query to unbound:53
-        Unbound->>Root: Recursive Root Resolution
-        Root-->>Unbound: IP Answer
-        Unbound-->>AdGuard: Cache & Return IP
+        AdGuard->>Cloudflare: Forward query to 1.1.1.1 / 1.0.0.1
+        Cloudflare-->>AdGuard: Resolved IP Answer
         AdGuard-->>Device: Return resolved public IP
     end
 ```
 
 ---
 
-## AdGuard + Unbound
+## AdGuard Upstream (Cloudflare 1.1.1.1)
 
-AdGuard acts as the DNS ad-blocker and DNS rewrite engine. For recursive resolving of internet queries, AdGuard forwards upstream requests to Unbound running in the same Docker network (`unbound:53`). Unbound queries root DNS nameservers directly.
+AdGuard acts as the DNS ad-blocker and DNS rewrite engine. For recursive resolving of internet queries, AdGuard forwards upstream requests directly to Cloudflare DNS (`1.1.1.1` and `1.0.0.1`).

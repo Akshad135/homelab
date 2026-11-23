@@ -85,7 +85,6 @@ These run strictly on the `homelab` Docker network and are not published directl
 - `ignis:8080`
 - `pastebin-server:8788`
 - `sure-web:3000`
-- `unbound:5335`
 - `helium-nginx:80`
 - `ext_proxy`, `ubo_proxy`, `ext_proxy_backup`
 
