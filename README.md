@@ -49,7 +49,7 @@ flowchart TB
 
         subgraph DNS["DNS & Resolution"]
             adguard["AdGuard Home (:53, :853)<br/>Split-Horizon Rewrite:<br/>akshad.duckdns.org -> 100.109.80.25"]
-            cloudflare["Cloudflare Upstream DNS<br/>1.1.1.1 / 1.0.0.1"]
+            cloudflare["Cloudflare & Quad9 DNS (Parallel)<br/>1.1.1.1 / 9.9.9.9"]
         end
 
         subgraph HomelabNet["Docker Network: homelab"]
